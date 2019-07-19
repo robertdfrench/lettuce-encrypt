@@ -1,0 +1,16 @@
+{
+	"builders": [{
+		"type": "amazon-ebs",
+		"region": "us-east-1",
+		"source_ami": "ami-0a01a5636f3c4f21c",
+		"instance_type": "t2.micro",
+		"ssh_username": "root",
+		"ami_name": "lettuce-{{ timestamp }}",
+		"tags": {
+			"OS_Version": "OmniOS",
+			"Release": "r151030",
+			"Name": "lettuce"
+		}
+	}],
+	"provisioners": [{"type": "shell", "script": "provision.sh"}]
+}
