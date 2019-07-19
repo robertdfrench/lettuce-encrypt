@@ -4,6 +4,8 @@ assertEnv=@if [ -z $${$(strip $1)+x} ]; then >&2 echo "You need to define \$$$(s
 check: install
 	$(call assertEnv, PARENT_ZONE)
 	ssh root@lettuce.$(PARENT_ZONE) hostname | grep lettuce.$(PARENT_ZONE)
+	ssh root@lettuce.$(PARENT_ZONE) bash -c "date >> /persistent/log"
+	ssh root@lettuce.$(PARENT_ZONE) cat /persistent/log
 	curl https://lettuce.$(PARENT_ZONE)/
 
 install: image dns storage init

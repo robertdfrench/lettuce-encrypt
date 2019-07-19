@@ -6,10 +6,11 @@ locals {
 }
 
 resource "aws_instance" "lettuce" {
-  ami             = data.aws_ami.image.id
-  instance_type   = "t2.micro"
-  key_name        = aws_key_pair.key_pair.key_name
-  security_groups = [aws_security_group.security_group.name]
+  ami               = data.aws_ami.image.id
+  instance_type     = "t2.micro"
+  key_name          = aws_key_pair.key_pair.key_name
+  security_groups   = [aws_security_group.security_group.name]
+  availability_zone = "us-east-1a"
   tags = {
     Name = local.name
   }
@@ -79,5 +80,32 @@ resource "aws_eip_association" "eip_assoc" {
 data "aws_eip" "ip" {
   tags = {
     Name = "lettuce"
+  }
+}
+
+resource "aws_volume_attachment" "ebs_att" {
+  device_name = "/dev/sdf"
+  instance_id = aws_instance.lettuce.id
+  volume_id   = data.aws_ebs_volume.storage.id
+
+  connection {
+    host = local.hostname
+  }
+
+  provisioner "remote-exec" {
+    inline = ["zpool create -m /persistent persistent c1t5d0"]
+  }
+
+  provisioner "remote-exec" {
+    when   = "destroy"
+    inline = ["zpool destroy -f persistent"]
+  }
+}
+
+data "aws_ebs_volume" "storage" {
+  most_recent = true
+  filter {
+    name   = "tag:Name"
+    values = ["lettuce"]
   }
 }
