@@ -1,4 +1,8 @@
-resource "aws_eip" "ip" {}
+resource "aws_eip" "ip" {
+  tags = {
+    Name = "lettuce"
+  }
+}
 
 data "aws_route53_zone" "parent" {
   name = format("%s.", var.parent_zone)

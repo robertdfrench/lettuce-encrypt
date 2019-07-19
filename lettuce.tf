@@ -62,3 +62,22 @@ resource "aws_security_group" "security_group" {
     Name = local.name
   }
 }
+
+resource "aws_eip_association" "eip_assoc" {
+  instance_id   = aws_instance.lettuce.id
+  allocation_id = data.aws_eip.ip.id
+
+  connection {
+    host = local.hostname
+  }
+
+  provisioner "remote-exec" {
+    inline = [format("hostname -s %s", local.hostname)]
+  }
+}
+
+data "aws_eip" "ip" {
+  tags = {
+    Name = "lettuce"
+  }
+}
