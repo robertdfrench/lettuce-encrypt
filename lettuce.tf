@@ -89,7 +89,7 @@ resource "aws_volume_attachment" "ebs_att" {
   volume_id   = data.aws_ebs_volume.storage.id
 
   connection {
-    host = local.hostname
+    host = aws_eip_association.eip_assoc.public_ip
   }
 
   provisioner "remote-exec" {
