@@ -5,8 +5,12 @@ check: install
 	$(call assertEnv, PARENT_ZONE)
 	ssh root@lettuce.$(PARENT_ZONE) hostname | grep lettuce.$(PARENT_ZONE)
 	ssh root@lettuce.$(PARENT_ZONE) bash -c "date >> /persistent/log"
-	ssh root@lettuce.$(PARENT_ZONE) cat /persistent/log
+	ssh root@lettuce.$(PARENT_ZONE) cat /persistent/link2log
 	curl https://lettuce.$(PARENT_ZONE)/
+
+link2log: install
+	ssh root@lettuce.$(PARENT_ZONE) bash -c "date >> /persistent/log"
+	ssh root@lettuce.$(PARENT_ZONE) ln -sf /persistent/log /persistent/link2log
 
 install: image dns storage init
 	$(call assertEnv, PARENT_ZONE)
