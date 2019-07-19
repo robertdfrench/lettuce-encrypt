@@ -6,7 +6,7 @@ check: install
 	ssh root@lettuce.$(PARENT_ZONE) hostname | grep lettuce.$(PARENT_ZONE)
 	curl https://lettuce.$(PARENT_ZONE)/
 
-install: image dns init
+install: image dns storage init
 	$(call assertEnv, PARENT_ZONE)
 	terraform apply -auto-approve -var 'parent_zone=$(PARENT_ZONE)'
 
@@ -24,6 +24,10 @@ image:
 .PHONY: dns
 dns:
 	$(MAKE) -C dns install
+
+.PHONY: storage
+storage:
+	$(MAKE) -C storage install
 
 clean:
 	$(call assertEnv, PARENT_ZONE)
