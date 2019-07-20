@@ -84,21 +84,22 @@ data "aws_eip" "ip" {
 }
 
 resource "aws_volume_attachment" "ebs_att" {
-  device_name = "/dev/sdf"
-  instance_id = aws_instance.lettuce.id
-  volume_id   = data.aws_ebs_volume.storage.id
+  device_name  = "/dev/sdf"
+  instance_id  = aws_instance.lettuce.id
+  volume_id    = data.aws_ebs_volume.storage.id
+  force_detach = true
 
   connection {
     host = aws_eip_association.eip_assoc.public_ip
   }
 
   provisioner "remote-exec" {
-    inline = ["zpool create -m /persistent persistent c1t5d0"]
+    inline = ["zpool create -m /persistent persistent c1t5d0 || zpool import persistent"]
   }
 
   provisioner "remote-exec" {
     when   = "destroy"
-    inline = ["zpool destroy -f persistent"]
+    inline = ["zpool export persistent"]
   }
 }
 
