@@ -67,14 +67,6 @@ resource "aws_security_group" "security_group" {
 resource "aws_eip_association" "eip_assoc" {
   instance_id   = aws_instance.lettuce.id
   allocation_id = data.aws_eip.ip.id
-
-  connection {
-    host = local.hostname
-  }
-
-  provisioner "remote-exec" {
-    inline = [format("hostname -s %s", local.hostname)]
-  }
 }
 
 data "aws_eip" "ip" {
@@ -88,19 +80,6 @@ resource "aws_volume_attachment" "ebs_att" {
   instance_id  = aws_instance.lettuce.id
   volume_id    = data.aws_ebs_volume.storage.id
   force_detach = true
-
-  connection {
-    host = aws_eip_association.eip_assoc.public_ip
-  }
-
-  provisioner "remote-exec" {
-    inline = ["zpool create -m /persistent persistent c1t5d0 || zpool import persistent"]
-  }
-
-  provisioner "remote-exec" {
-    when   = "destroy"
-    inline = ["zpool export persistent"]
-  }
 }
 
 data "aws_ebs_volume" "storage" {

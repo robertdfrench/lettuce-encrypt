@@ -3,14 +3,14 @@ assertEnv=@if [ -z $${$(strip $1)+x} ]; then >&2 echo "You need to define \$$$(s
 
 check: install
 	$(call assertEnv, PARENT_ZONE)
-	ssh root@lettuce.$(PARENT_ZONE) hostname | grep lettuce.$(PARENT_ZONE)
-	ssh root@lettuce.$(PARENT_ZONE) bash -c "date >> /persistent/log"
-	ssh root@lettuce.$(PARENT_ZONE) cat /persistent/link2log
+	ssh -o StrictHostKeyChecking=false root@lettuce.$(PARENT_ZONE) hostname \
+		| grep lettuce.$(PARENT_ZONE)
 	curl https://lettuce.$(PARENT_ZONE)/
 
-link2log: install
-	ssh root@lettuce.$(PARENT_ZONE) bash -c "date >> /persistent/log"
-	ssh root@lettuce.$(PARENT_ZONE) ln -sf /persistent/log /persistent/link2log
+provision: install
+	scp -r -o StrictHostKeyChecking=false provisions root@lettuce.$(PARENT_ZONE):/tmp
+	ssh -o StrictHostKeyChecking=false root@lettuce.$(PARENT_ZONE) \
+		/usr/gnu/bin/make -C /tmp/provisions DOMAIN=lettuce.$(PARENT_ZONE)
 
 install: image dns storage init
 	$(call assertEnv, PARENT_ZONE)
