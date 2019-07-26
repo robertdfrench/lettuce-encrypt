@@ -1,4 +1,4 @@
-# Lettuce Encrypt (🥬,🔐)
+# 🥬 Lettuce Encrypt 🔐
 *Zero-touch deployment of EC2 + TLS*
 
 *Lettuce Encrypt* is a pattern for deploying EC2 web servers that can obtain
