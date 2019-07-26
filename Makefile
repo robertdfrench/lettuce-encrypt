@@ -1,14 +1,15 @@
 SHELL=bash
 assertEnv=@if [ -z $${$(strip $1)+x} ]; then >&2 echo "You need to define \$$$(strip $1)"; exit 1; fi
 
-check: install
+check: provision
 	$(call assertEnv, PARENT_ZONE)
 	ssh -o StrictHostKeyChecking=false root@lettuce.$(PARENT_ZONE) hostname \
 		| grep lettuce.$(PARENT_ZONE)
 	curl https://lettuce.$(PARENT_ZONE)/
 
 provision: install
-	scp -r -o StrictHostKeyChecking=false provisions root@lettuce.$(PARENT_ZONE):/tmp
+	scp -pr -o StrictHostKeyChecking=false -o ConnectTimeout=300 \
+		provisions root@lettuce.$(PARENT_ZONE):/tmp
 	ssh -o StrictHostKeyChecking=false root@lettuce.$(PARENT_ZONE) \
 		/usr/gnu/bin/make -C /tmp/provisions DOMAIN=lettuce.$(PARENT_ZONE)
 
