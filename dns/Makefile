@@ -1,5 +1,4 @@
-SHELL=bash
-assertEnv=@if [ -z $${$(strip $1)+x} ]; then >&2 echo "You need to define \$$$(strip $1)"; exit 1; fi
+include lib.mk
 
 check: install
 	$(call assertEnv, PARENT_ZONE)

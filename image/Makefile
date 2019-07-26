@@ -1,3 +1,5 @@
+include lib.mk
+
 install: packed.state
 	@echo + Packer image complete
 

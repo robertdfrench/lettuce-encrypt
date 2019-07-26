@@ -1,23 +1,18 @@
-SHELL=bash
-assertEnv=@if [ -z $${$(strip $1)+x} ]; then >&2 echo "You need to define \$$$(strip $1)"; exit 1; fi
+include lib.mk
 
-check: provision
+check: install ## Can we access the webserver over https?
 	$(call assertEnv, PARENT_ZONE)
-	ssh -o StrictHostKeyChecking=false root@lettuce.$(PARENT_ZONE) hostname \
-		| grep lettuce.$(PARENT_ZONE)
 	curl https://lettuce.$(PARENT_ZONE)/
 
-provision: install
+install: image dns storage init ## Deploy and provision the webserver
+	$(call assertEnv, PARENT_ZONE)
+	terraform apply -auto-approve -var 'parent_zone=$(PARENT_ZONE)'
 	scp -pr -o StrictHostKeyChecking=false -o ConnectTimeout=300 \
 		provisions root@lettuce.$(PARENT_ZONE):/tmp
 	ssh -o StrictHostKeyChecking=false root@lettuce.$(PARENT_ZONE) \
 		/usr/gnu/bin/make -C /tmp/provisions DOMAIN=lettuce.$(PARENT_ZONE)
 
-install: image dns storage init
-	$(call assertEnv, PARENT_ZONE)
-	terraform apply -auto-approve -var 'parent_zone=$(PARENT_ZONE)'
-
-init: .terraform/initialized
+init: .terraform/initialized ## Download terraform plugins
 	$(info + Terraform Initialized)
 
 .terraform/initialized: providers.tf
@@ -25,17 +20,18 @@ init: .terraform/initialized
 	@touch $@
 
 .PHONY: image
-image:
+image: ## Build a custom AMI for the webserver
 	$(MAKE) -C image install
 
 .PHONY: dns
-dns:
-	$(MAKE) -C dns install
+dns: ## Reserve an IP4 address and register an A record under the PARENT_ZONE
+	$(call assertEnv, PARENT_ZONE)
+	$(MAKE) -C dns install PARENT_ZONE=$(PARENT_ZONE)
 
 .PHONY: storage
-storage:
+storage: ## Reseve an EBS volume where the Let's Encrypt certificates can live
 	$(MAKE) -C storage install
 
-clean:
+clean: ## Destroy the webserver (not the eip, image, or storage)
 	$(call assertEnv, PARENT_ZONE)
 	terraform destroy -auto-approve -var 'parent_zone=$(PARENT_ZONE)'

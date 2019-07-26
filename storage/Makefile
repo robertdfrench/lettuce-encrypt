@@ -1,4 +1,4 @@
-SHELL=bash
+include lib.mk
 
 install: init
 	terraform apply -auto-approve
