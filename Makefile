@@ -35,3 +35,10 @@ storage: ## Reseve an EBS volume where the Let's Encrypt certificates can live
 clean: ## Destroy the webserver (not the eip, image, or storage)
 	$(call assertEnv, PARENT_ZONE)
 	terraform destroy -auto-approve -var 'parent_zone=$(PARENT_ZONE)'
+
+clean_all: clean ## Destroy *everything*
+	$(call assertEnv, PARENT_ZONE)
+	$(MAKE) -C storage clean
+	$(MAKE) -C dns clean PARENT_ZONE=$(PARENT_ZONE)
+	$(MAKE) -C image clean
+	rm -rf .terraform

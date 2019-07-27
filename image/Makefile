@@ -6,3 +6,6 @@ install: packed.state
 packed.state: packer.json provision.sh
 	packer build packer.json
 	@touch $@
+
+clean:
+	$(warning Not yet implemented, clean the images up yourself!)
