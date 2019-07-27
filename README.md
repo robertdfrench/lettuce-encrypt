@@ -10,11 +10,69 @@ Simply `make provision PARENT_ZONE=x` where x is a domain that you already have
 registered in Route53. Assuming you have valid AWS credentials, Lettuce Encrypt
 will do the following:
 
-1. Reserve a static IP address and assign it to a new subdomain ([dns](dns/))
-1. Create a new AMI ([image](image/))
-1. Create a small storage volume to hold your Let's Encrypt certs ([storage](storage/))
+1. Reserve a static IP address and assign it to a new subdomain ([dns/](dns/))
+1. Create a new AMI ([image/](image/))
+1. Create a small storage volume to hold your Let's Encrypt certs ([storage/](storage/))
 1. Deploy an EC2 instance which mounts this volume and uses the reserved IP
 1. Provision this instance, obtaining or renewing Let's Encrypt certs as needed
+
+#### Architecture
+```
+  ┌───────────────────────────────────────────────────────────────────────────────┐
+  │                                 Provisioning                                  │
+  │                                                                               │
+  │                           ┌──────────────────┐                                │
+  │                           │  Let's Encrypt   │                                │
+  │           ┌──────────────▶│   Certificates   │◀─────────────┐                 │
+  │           │               └──────────────────┘              │                 │
+  │           │                                                 │                 │
+  │ ┌───────────────────┐                                   ┌───────┐             │
+  │ │provisions/Makefile│──────────────────────────────────▶│ Zpool │             │
+  │ └───────────────────┘                                   └───────┘             │
+  │           ▲                                                 ▲                 │
+  └───────────┼─────────────────────────────────────────────────┼─────────────────┘
+  ┌───────────┼─────────────────────────────────────────────────┼─────────────────┐
+  │           │                       Webserver                 │                 │
+  │           │                                         ┌──────────────┐          │
+  │           │                                         │    Volume    │          │
+  │           ├────────────────────────────────────────▶│  Attachment  │          │
+  │           │              ┌──────────────┐           └──────────────┘          │
+  │           ├─────────────▶│EIP Attachment│                   ▲                 │
+  │           │              └──────────────┘                   │                 │
+  │    ┌────────────┐                ▲                          │                 │
+  │    │EC2 Instance│                │                          │                 │
+  │    └────────────┘                │                          │                 │
+  │           ▲                      │                          │                 │
+  └───────────┼──────────────────────┼──────────────────────────┼─────────────────┘
+              │                      │                          │                  
+  ┌───────────┼──────────────────┐   │                          │                  
+  │           │Image             │   │                          │                  
+  │ ┌───────────────────┐        │   │                          │                  
+  │ │    Lettuce AMI    │        │   │                          │                  
+  │ └───────────────────┘        │   │                          │                  
+  │           ▲                  │   │                          │                  
+  │           │                  │   │                          │                  
+  │           ├──────────┐       │   │ ┌──────────────────────┐ │                  
+  │           │          │       │   │ │         DNS          │ │                  
+  │           │          │       │   │ │ ┌──────────────────┐ │ │                  
+  │           │   ┌────────────┐ │   │ │ │ Subdomain Record │ │ │                  
+  │           │   │provision.sh│ │   │ │ │    (Route 53)    │ │ │                  
+  │           │   └────────────┘ │   │ │ └──────────────────┘ │ │                  
+  │           ┴                  │   │ │           ▲          │ │┌────────────────┐
+  │ ┌───────────────────┐        │   │ │           │          │ ││    Storage     │
+  │ │      OmniOS       │        │   │ │    ┌────────────┐    │ ││ ┌────────────┐ │
+  │ │ Community Edition │        │   └─┼────│ Elastic IP │    │ └┼─│ EBS Volume │ │
+  │ └───────────────────┘        │     │    └────────────┘    │  │ └────────────┘ │
+  └──────────────────────────────┘     └──────────────────────┘  └────────────────┘
+                                                                                   
+  ┌───────────────────────────────────────────────────────────────────────────────┐
+  │                                 Prerequisites                                 │
+  │          ┌────────────────────────┐         ┌────────────────────┐            │
+  │          │Existing Route53 Domain │         │AWS Credentials for │            │
+  │          │     (PARENT_ZONE)      │◀───────▶│     us-east-1      │            │
+  │          └────────────────────────┘         └────────────────────┘            │
+  └───────────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Caveats
 This pattern assumes that the instance is not part of a cluster (i.e. that you
