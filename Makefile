@@ -4,7 +4,7 @@ check: install ## Can we access the webserver over https?
 	$(call assertEnv, PARENT_ZONE)
 	curl https://lettuce.$(PARENT_ZONE)/
 
-install: image dns storage init ## Deploy and provision the webserver
+install: pubkey image dns storage init ## Deploy and provision the webserver
 	$(call assertEnv, PARENT_ZONE)
 	terraform apply -auto-approve -var 'parent_zone=$(PARENT_ZONE)'
 	scp -pr -o StrictHostKeyChecking=false -o ConnectTimeout=300 \
@@ -42,3 +42,10 @@ clean_all: clean ## Destroy *everything*
 	$(MAKE) -C dns clean PARENT_ZONE=$(PARENT_ZONE)
 	$(MAKE) -C image clean
 	rm -rf .terraform
+
+.PHONY: pubkey
+pubkey: $(HOME)/.ssh/id_rsa.pub
+	$(info +pubkey)
+
+$(HOME)/.ssh/id_rsa.pub:
+	$(error Lettuce Encrypt assumes you have a valid RSA-formatted SSH keypair. Please use ssh-keygen to make one)
